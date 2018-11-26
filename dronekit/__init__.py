@@ -348,12 +348,22 @@ class Version(object):
         else:
             prefix += "UnknownAutoPilot"
 
-        if self.vehicle_type == ardupilotmega.MAV_TYPE_QUADROTOR:
+        if self.vehicle_type == ardupilotmega.MAV_TYPE_QUADROTOR or
+           self.vehicle_type == ardupilotmega.MAV_TYPE_HELICOPTER or
+           self.vehicle_type == ardupilotmega.MAV_TYPE_HEXAROTOR or
+           self.vehicle_type == ardupilotmega.MAV_TYPE_OCTOROTOR or
+           self.vehicle_type == ardupilotmega.MAV_TYPE_DODECAROTOR or
+           self.vehicle_type == ardupilotmega.MAV_TYPE_COAXIAL or
+           self.vehicle_type == ardupilotmega.MAV_TYPE_TRICOPTER:
             prefix += "Copter-"
         elif self.vehicle_type == ardupilotmega.MAV_TYPE_FIXED_WING:
             prefix += "Plane-"
         elif self.vehicle_type == ardupilotmega.MAV_TYPE_GROUND_ROVER:
             prefix += "Rover-"
+        elif self.vehicle_type == ardupilotmega.MAV_TYPE_SURFACE_BOAT:
+            prefix += "Boat-"
+        elif self.vehicle_type == ardupilotmega.MAV_TYPE_SUBMARINE:
+            prefix += "Submarine-"
         else:
             prefix += "UnknownVehicleType%d-" % self.vehicle_type
 
