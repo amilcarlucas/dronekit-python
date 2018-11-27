@@ -2366,6 +2366,19 @@ enums['ROVER_MODE'][16] = EnumEntry('ROVER_MODE_INITIALIZING', '''''')
 ROVER_MODE_ENUM_END = 17 # 
 enums['ROVER_MODE'][17] = EnumEntry('ROVER_MODE_ENUM_END', '''''')
 
+mode_mapping_rover = {
+    0 : 'MANUAL',
+    1 : 'ACRO',
+    2 : 'LEARNING',
+    3 : 'STEERING',
+    4 : 'HOLD',
+    5 : 'LOITER',
+    10 : 'AUTO',
+    11 : 'RTL',
+    12 : 'SMART_RTL',
+    15 : 'GUIDED',
+    16 : 'INITIALISING'
+    }
 # TRACKER_MODE
 enums['TRACKER_MODE'] = {}
 TRACKER_MODE_MANUAL = 0 # 
