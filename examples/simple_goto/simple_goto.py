@@ -26,13 +26,6 @@ connection_string = args.connect
 sitl = None
 
 
-# Start SITL if no connection string specified
-if not connection_string:
-    import dronekit_sitl
-    sitl = dronekit_sitl.start_default()
-    connection_string = sitl.connection_string()
-
-
 # Connect to the Vehicle
 print('Connecting to vehicle on: %s' % connection_string)
 vehicle = connect(connection_string, wait_ready=True)
@@ -99,7 +92,3 @@ vehicle.mode = VehicleMode("RTL")
 # Close vehicle object before exiting script
 print("Close vehicle object")
 vehicle.close()
-
-# Shut down simulator if it was started.
-if sitl:
-    sitl.stop()
