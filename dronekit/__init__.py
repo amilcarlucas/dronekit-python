@@ -42,9 +42,9 @@ import time
 import monotonic
 from past.builtins import basestring
 
-from pymavlink import mavutil, mavwp
+#from pymavlink import mavutil, mavwp
 #from pymavlink.dialects.v10 import ardupilotmega
-from . import ardupilotmega
+from . import ardupilot
 
 from dronekit.util import ErrprinterHandler
 
@@ -341,28 +341,28 @@ class Version(object):
     def __str__(self):
         prefix = ""
 
-        if self.autopilot_type == ardupilotmega.MAV_AUTOPILOT_ARDUPILOTMEGA:
+        if self.autopilot_type == ardupilot.MAV_AUTOPILOT_ARDUPILOTMEGA:
             prefix += "APM:"
-        elif self.autopilot_type == ardupilotmega.MAV_AUTOPILOT_PX4:
+        elif self.autopilot_type == ardupilot.MAV_AUTOPILOT_PX4:
             prefix += "PX4"
         else:
             prefix += "UnknownAutoPilot"
 
-        if self.vehicle_type == ardupilotmega.MAV_TYPE_QUADROTOR or
-           self.vehicle_type == ardupilotmega.MAV_TYPE_HELICOPTER or
-           self.vehicle_type == ardupilotmega.MAV_TYPE_HEXAROTOR or
-           self.vehicle_type == ardupilotmega.MAV_TYPE_OCTOROTOR or
-           self.vehicle_type == ardupilotmega.MAV_TYPE_DODECAROTOR or
-           self.vehicle_type == ardupilotmega.MAV_TYPE_COAXIAL or
-           self.vehicle_type == ardupilotmega.MAV_TYPE_TRICOPTER:
+        if self.vehicle_type == ardupilot.MAV_TYPE_QUADROTOR or
+           self.vehicle_type == ardupilot.MAV_TYPE_HELICOPTER or
+           self.vehicle_type == ardupilot.MAV_TYPE_HEXAROTOR or
+           self.vehicle_type == ardupilot.MAV_TYPE_OCTOROTOR or
+           self.vehicle_type == ardupilot.MAV_TYPE_DODECAROTOR or
+           self.vehicle_type == ardupilot.MAV_TYPE_COAXIAL or
+           self.vehicle_type == ardupilot.MAV_TYPE_TRICOPTER:
             prefix += "Copter-"
-        elif self.vehicle_type == ardupilotmega.MAV_TYPE_FIXED_WING:
+        elif self.vehicle_type == ardupilot.MAV_TYPE_FIXED_WING:
             prefix += "Plane-"
-        elif self.vehicle_type == ardupilotmega.MAV_TYPE_GROUND_ROVER:
+        elif self.vehicle_type == ardupilot.MAV_TYPE_GROUND_ROVER:
             prefix += "Rover-"
-        elif self.vehicle_type == ardupilotmega.MAV_TYPE_SURFACE_BOAT:
+        elif self.vehicle_type == ardupilot.MAV_TYPE_SURFACE_BOAT:
             prefix += "Boat-"
-        elif self.vehicle_type == ardupilotmega.MAV_TYPE_SUBMARINE:
+        elif self.vehicle_type == ardupilot.MAV_TYPE_SUBMARINE:
             prefix += "Submarine-"
         else:
             prefix += "UnknownVehicleType%d-" % self.vehicle_type
@@ -1206,11 +1206,11 @@ class Vehicle(HasObservers):
         @self.on_message('EKF_STATUS_REPORT')
         def listener(self, name, m):
             # boolean: EKF's horizontal position (absolute) estimate is good
-            self._ekf_poshorizabs = (m.flags & ardupilotmega.EKF_POS_HORIZ_ABS) > 0
+            self._ekf_poshorizabs = (m.flags & ardupilot.EKF_POS_HORIZ_ABS) > 0
             # boolean: EKF is in constant position mode and does not know it's absolute or relative position
-            self._ekf_constposmode = (m.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0
+            self._ekf_constposmode = (m.flags & ardupilot.EKF_CONST_POS_MODE) > 0
             # boolean: EKF's predicted horizontal position (absolute) estimate is good
-            self._ekf_predposhorizabs = (m.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0
+            self._ekf_predposhorizabs = (m.flags & ardupilot.EKF_PRED_POS_HORIZ_ABS) > 0
 
             self.notify_attribute_listeners('ekf_ok', self.ekf_ok, cache=True)
 
@@ -1223,15 +1223,15 @@ class Vehicle(HasObservers):
         @self.on_message('HEARTBEAT')
         def listener(self, name, m):
             # ignore groundstations
-            if m.type == ardupilotmega.MAV_TYPE_GCS:
+            if m.type == ardupilot.MAV_TYPE_GCS:
                 return
-            self._armed = (m.base_mode & ardupilotmega.MAV_MODE_FLAG_SAFETY_ARMED) != 0
+            self._armed = (m.base_mode & ardupilot.MAV_MODE_FLAG_SAFETY_ARMED) != 0
             self.notify_attribute_listeners('armed', self.armed, cache=True)
             self._autopilot_type = m.autopilot
             self._vehicle_type = m.type
             if self._is_mode_available(m.custom_mode, m.base_mode) is False:
                 raise APIException("mode (%s, %s) not available on mavlink definition" % (m.custom_mode, m.base_mode))
-            if self._autopilot_type == ardupilotmega.MAV_AUTOPILOT_PX4:
+            if self._autopilot_type == ardupilot.MAV_AUTOPILOT_PX4:
                 self._flightmode = interpret_px4_mode(m.base_mode, m.custom_mode)
             else:
                 self._flightmode = self._mode_mapping_bynumber[m.custom_mode]
@@ -1370,8 +1370,8 @@ class Vehicle(HasObservers):
         def listener(_):
             # Send 1 heartbeat per second
             if monotonic.monotonic() - self._heartbeat_lastsent > 1:
-                self._master.mav.heartbeat_send(ardupilotmega.MAV_TYPE_GCS,
-                                                ardupilotmega.MAV_AUTOPILOT_INVALID, 0, 0, 0)
+                self._master.mav.heartbeat_send(ardupilot.MAV_TYPE_GCS,
+                                                ardupilot.MAV_AUTOPILOT_INVALID, 0, 0, 0)
                 self._heartbeat_lastsent = monotonic.monotonic()
 
             # Timeouts.
@@ -1387,7 +1387,7 @@ class Vehicle(HasObservers):
         @self.on_message(['HEARTBEAT'])
         def listener(self, name, msg):
             # ignore groundstations
-            if msg.type == ardupilotmega.MAV_TYPE_GCS:
+            if msg.type == ardupilot.MAV_TYPE_GCS:
                 return
             self._heartbeat_system = msg.get_srcSystem()
             self._heartbeat_lastreceived = monotonic.monotonic()
@@ -1578,23 +1578,24 @@ class Vehicle(HasObservers):
         '''return dictionary mapping mode numbers to name, or None if unknown'''
         # return mavutil.mode_mapping_bynumber(self._vehicle_type)
         map = None
-        if self._vehicle_type in [ardupilotmega.MAV_TYPE_QUADROTOR,
-                        ardupilotmega.MAV_TYPE_HELICOPTER,
-                        ardupilotmega.MAV_TYPE_HEXAROTOR,
-                        ardupilotmega.MAV_TYPE_OCTOROTOR,
-                        ardupilotmega.MAV_TYPE_DODECAROTOR,
-                        ardupilotmega.MAV_TYPE_COAXIAL,
-                        ardupilotmega.MAV_TYPE_TRICOPTER]:
-            map = enums['COPTER_MODE'] # mode_mapping_acm
-        if self._vehicle_type == ardupilotmega.MAV_TYPE_FIXED_WING:
+        if self._vehicle_type in [ardupilot.MAV_TYPE_QUADROTOR,
+                        ardupilot.MAV_TYPE_HELICOPTER,
+                        ardupilot.MAV_TYPE_HEXAROTOR,
+                        ardupilot.MAV_TYPE_OCTOROTOR,
+                        ardupilot.MAV_TYPE_DODECAROTOR,
+                        ardupilot.MAV_TYPE_COAXIAL,
+                        ardupilot.MAV_TYPE_TRICOPTER]:
+            #map = enums['COPTER_MODE'] # mode_mapping_acm
+            map = dict((id, description) for (id, name, description) in enums['COPTER_MODE'])
+        if self._vehicle_type == ardupilot.MAV_TYPE_FIXED_WING:
             map = enums['PLANE_MODE'] # mode_mapping_apm
-        if self._vehicle_type == ardupilotmega.MAV_TYPE_GROUND_ROVER:
+        if self._vehicle_type == ardupilot.MAV_TYPE_GROUND_ROVER:
             map = enums['ROVER_MODE'] # mode_mapping_rover
-        if self._vehicle_type == ardupilotmega.MAV_TYPE_SURFACE_BOAT:
+        if self._vehicle_type == ardupilot.MAV_TYPE_SURFACE_BOAT:
             map = enums['ROVER_MODE'] # mode_mapping_rover # for the time being
-        if self._vehicle_type == ardupilotmega.MAV_TYPE_ANTENNA_TRACKER:
+        if self._vehicle_type == ardupilot.MAV_TYPE_ANTENNA_TRACKER:
             map = enums['TRACKER_MODE'] # mode_mapping_tracker
-        if self._vehicle_type == ardupilotmega.MAV_TYPE_SUBMARINE:
+        if self._vehicle_type == ardupilot.MAV_TYPE_SUBMARINE:
             map = enums['SUB_MODE'] # mode_mapping_sub
         if map is None:
             return None
@@ -1620,15 +1621,15 @@ class Vehicle(HasObservers):
     PX4_CUSTOM_SUB_MODE_AUTO_RTGS          = 7
     PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET = 8
     
-    auto_mode_flags  = ardupilotmega.MAV_MODE_FLAG_AUTO_ENABLED \
-                     | ardupilotmega.MAV_MODE_FLAG_STABILIZE_ENABLED \
-                     | ardupilotmega.MAV_MODE_FLAG_GUIDED_ENABLED
+    auto_mode_flags  = ardupilot.MAV_MODE_FLAG_AUTO_ENABLED \
+                     | ardupilot.MAV_MODE_FLAG_STABILIZE_ENABLED \
+                     | ardupilot.MAV_MODE_FLAG_GUIDED_ENABLED
 
     def interpret_px4_mode(base_mode, custom_mode):
         custom_main_mode = (custom_mode & 0xFF0000)   >> 16
         custom_sub_mode  = (custom_mode & 0xFF000000) >> 24
     
-        if base_mode & ardupilotmega.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED != 0: #manual modes
+        if base_mode & ardupilot.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED != 0: #manual modes
             if custom_main_mode == PX4_CUSTOM_MAIN_MODE_MANUAL:
                 return "MANUAL"
             elif custom_main_mode == PX4_CUSTOM_MAIN_MODE_ACRO:
@@ -1663,7 +1664,7 @@ class Vehicle(HasObservers):
 
     def _is_mode_available(self, custommode_code, basemode_code=0):
         try:
-            if self._autopilot_type == ardupilotmega.MAV_AUTOPILOT_PX4:
+            if self._autopilot_type == ardupilot.MAV_AUTOPILOT_PX4:
                 mode = interpret_px4_mode(basemode_code, custommode_code)
                 return mode in self._mode_mapping
             return custommode_code in self._mode_mapping_bynumber
@@ -1707,7 +1708,7 @@ class Vehicle(HasObservers):
         if isinstance(v, basestring):
             v = VehicleMode(v)
 
-        if self._autopilot_type == ardupilotmega.MAV_AUTOPILOT_PX4:
+        if self._autopilot_type == ardupilot.MAV_AUTOPILOT_PX4:
             self._master.set_mode(v.name)
         elif isinstance(v, int):
             self._master.set_mode(v)
@@ -1923,7 +1924,7 @@ class Vehicle(HasObservers):
         speed_type = 1  # ground speed
         msg = self.message_factory.command_long_encode(
             0, 0,    # target system, target component
-            ardupilotmega.MAV_CMD_DO_CHANGE_SPEED,  # command
+            ardupilot.MAV_CMD_DO_CHANGE_SPEED,  # command
             0,  # confirmation
             speed_type,  # param 1
             speed,  # speed in metres/second
@@ -1949,7 +1950,7 @@ class Vehicle(HasObservers):
         speed_type = 0  # air speed
         msg = self.message_factory.command_long_encode(
             0, 0,    # target system, target component
-            ardupilotmega.MAV_CMD_DO_CHANGE_SPEED,  # command
+            ardupilot.MAV_CMD_DO_CHANGE_SPEED,  # command
             0,  # confirmation
             speed_type,  # param 1
             speed,  # speed in metres/second
@@ -2074,7 +2075,7 @@ class Vehicle(HasObservers):
         # Send MAVLink update.
         self.send_mavlink(self.message_factory.command_long_encode(
             0, 0,  # target system, target component
-            ardupilotmega.MAV_CMD_DO_SET_HOME,  # command
+            ardupilot.MAV_CMD_DO_SET_HOME,  # command
             0,  # confirmation
             0,  # param 1: 1 to use current position, 0 to use the entered values.
             0, 0, 0,  # params 2-4
@@ -2237,7 +2238,7 @@ class Vehicle(HasObservers):
             altitude = float(alt)
             if math.isnan(altitude) or math.isinf(altitude):
                 raise ValueError("Altitude was NaN or Infinity. Please provide a real number")
-            self._master.mav.command_long_send(0, 0, ardupilotmega.MAV_CMD_NAV_TAKEOFF,
+            self._master.mav.command_long_send(0, 0, ardupilot.MAV_CMD_NAV_TAKEOFF,
                                                0, 0, 0, 0, 0, 0, 0, altitude)
 
     def simple_goto(self, location, airspeed=None, groundspeed=None):
@@ -2267,14 +2268,14 @@ class Vehicle(HasObservers):
         :param groundspeed: Target groundspeed in m/s (optional).
         '''
         if isinstance(location, LocationGlobalRelative):
-            frame = ardupilotmega.MAV_FRAME_GLOBAL_RELATIVE_ALT
+            frame = ardupilot.MAV_FRAME_GLOBAL_RELATIVE_ALT
             alt = location.alt
         elif isinstance(location, LocationGlobal):
             # This should be the proper code:
-            # frame = ardupilotmega.MAV_FRAME_GLOBAL
+            # frame = ardupilot.MAV_FRAME_GLOBAL
             # However, APM discards information about the relative frame
             # and treats any alt value as relative. So we compensate here.
-            frame = ardupilotmega.MAV_FRAME_GLOBAL_RELATIVE_ALT
+            frame = ardupilot.MAV_FRAME_GLOBAL_RELATIVE_ALT
             if not self.home_location:
                 self.commands.download()
                 self.commands.wait_ready()
@@ -2283,7 +2284,7 @@ class Vehicle(HasObservers):
             raise ValueError('Expecting location to be LocationGlobal or LocationGlobalRelative.')
 
         self._master.mav.mission_item_send(0, 0, 0, frame,
-                                           ardupilotmega.MAV_CMD_NAV_WAYPOINT, 2, 0, 0,
+                                           ardupilot.MAV_CMD_NAV_WAYPOINT, 2, 0, 0,
                                            0, 0, 0, location.lat, location.lon,
                                            alt)
 
@@ -2379,7 +2380,7 @@ class Vehicle(HasObservers):
 
         # Initialize data stream.
         if rate is not None:
-            self._master.mav.request_data_stream_send(0, 0, ardupilotmega.MAV_DATA_STREAM_ALL,
+            self._master.mav.request_data_stream_send(0, 0, ardupilot.MAV_DATA_STREAM_ALL,
                                                       rate, 1)
 
         self.add_message_listener('HEARTBEAT', self.send_capabilities_request)
@@ -2403,7 +2404,7 @@ class Vehicle(HasObservers):
 
     def send_capabilities_request(self, vehicle, name, m):
         '''Request an AUTOPILOT_VERSION packet'''
-        capability_msg = vehicle.message_factory.command_long_encode(0, 0, ardupilotmega.MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, 0, 1, 0, 0, 0, 0, 0, 0)
+        capability_msg = vehicle.message_factory.command_long_encode(0, 0, ardupilot.MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, 0, 1, 0, 0, 0, 0, 0, 0)
         vehicle.send_mavlink(capability_msg)
 
     def play_tune(self, tune):
@@ -2482,7 +2483,7 @@ class Vehicle(HasObservers):
 
         reboot_msg = self.message_factory.command_long_encode(
             0, 0,  # target_system, target_component
-            ardupilotmega.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,  # command
+            ardupilot.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,  # command
             0,  # confirmation
             1,  # param 1, autopilot (reboot)
             0,  # param 2, onboard computer (do nothing)
@@ -2584,7 +2585,7 @@ class Gimbal(object):
         """
         msg = self._vehicle.message_factory.mount_configure_encode(
             0, 1,    # target system, target component
-            ardupilotmega.MAV_MOUNT_MODE_MAVLINK_TARGETING,  #mount_mode
+            ardupilot.MAV_MOUNT_MODE_MAVLINK_TARGETING,  #mount_mode
             1,  # stabilize roll
             1,  # stabilize pitch
             1,  # stabilize yaw
@@ -2619,7 +2620,7 @@ class Gimbal(object):
         # set gimbal to targeting mode
         msg = self._vehicle.message_factory.mount_configure_encode(
             0, 1,    # target system, target component
-            ardupilotmega.MAV_MOUNT_MODE_GPS_POINT,  # mount_mode
+            ardupilot.MAV_MOUNT_MODE_GPS_POINT,  # mount_mode
             1,  # stabilize roll
             1,  # stabilize pitch
             1,  # stabilize yaw
@@ -2640,7 +2641,7 @@ class Gimbal(object):
         # set the ROI
         msg = self._vehicle.message_factory.command_long_encode(
             0, 1,    # target system, target component
-            ardupilotmega.MAV_CMD_DO_SET_ROI,  # command
+            ardupilot.MAV_CMD_DO_SET_ROI,  # command
             0,  # confirmation
             0, 0, 0, 0,  # params 1-4
             roi.lat,
@@ -2658,7 +2659,7 @@ class Gimbal(object):
         """
         msg = self._vehicle.message_factory.mount_configure_encode(
             0, 1,    # target system, target component
-            ardupilotmega.MAV_MOUNT_MODE_RC_TARGETING,  # mount_mode
+            ardupilot.MAV_MOUNT_MODE_RC_TARGETING,  # mount_mode
             1,  # stabilize roll
             1,  # stabilize pitch
             1,  # stabilize yaw
@@ -2855,7 +2856,7 @@ class Parameters(collections.MutableMapping, HasObservers):
         return super(Parameters, self).on_attribute(attr_name, *args, **kwargs)
 
 
-class Command(ardupilotmega.MAVLink_mission_item_message):
+class Command(ardupilot.MAVLink_mission_item_message):
     """
     A waypoint object.
 
@@ -2867,8 +2868,8 @@ class Command(ardupilotmega.MAVLink_mission_item_message):
 
     .. code:: python
 
-        cmd = Command(0,0,0, ardupilotmega.MAV_FRAME_GLOBAL_RELATIVE_ALT,
-            ardupilotmega.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0,-34.364114, 149.166022, 30)
+        cmd = Command(0,0,0, ardupilot.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+            ardupilot.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0,-34.364114, 149.166022, 30)
 
     :param target_system: This can be set to any value
         (DroneKit changes the value to the MAVLink ID of the connected vehicle before the command is sent).
@@ -2877,10 +2878,10 @@ class Command(ardupilotmega.MAVLink_mission_item_message):
     :param seq: The sequence number within the mission (the autopilot will reject messages sent out of sequence).
         This should be set to zero as the API will automatically set the correct value when uploading a mission.
     :param frame: The frame of reference used for the location parameters (x, y, z). In most cases this will be
-        ``ardupilotmega.MAV_FRAME_GLOBAL_RELATIVE_ALT``, which uses the WGS84 global coordinate system for latitude and longitude, but sets altitude
+        ``ardupilot.MAV_FRAME_GLOBAL_RELATIVE_ALT``, which uses the WGS84 global coordinate system for latitude and longitude, but sets altitude
         as relative to the home position in metres (home altitude = 0). For more information `see the wiki here
         <http://planner.ardupilot.com/wiki/common-mavlink-mission-command-messages-mav_cmd/#frames_of_reference>`_.
-    :param command: The specific mission command (e.g. ``ardupilotmega.MAV_CMD_NAV_WAYPOINT``). The supported commands (and command parameters
+    :param command: The specific mission command (e.g. ``ardupilot.MAV_CMD_NAV_WAYPOINT``). The supported commands (and command parameters
         are listed `on the wiki <http://planner.ardupilot.com/wiki/common-mavlink-mission-command-messages-mav_cmd/>`_.
     :param current: Set to zero (not supported).
     :param autocontinue: Set to zero (not supported).
@@ -2928,7 +2929,7 @@ class CommandSequence(object):
         lat = -34.364114,
         lon = 149.166022
         altitude = 30.0
-        cmd = Command(0,0,0, ardupilotmega.MAV_FRAME_GLOBAL_RELATIVE_ALT, ardupilotmega.MAV_CMD_NAV_WAYPOINT,
+        cmd = Command(0,0,0, ardupilot.MAV_FRAME_GLOBAL_RELATIVE_ALT, ardupilot.MAV_CMD_NAV_WAYPOINT,
             0, 0, 0, 0, 0, 0,
             lat, lon, altitude)
         cmds.add(cmd)
